@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+from numpy import exp
+from pylab import rcParams
+
+df = pd.read_csv('StockholmCovid.csv', parse_dates=['date'])
+
+sthlm_data = []
+prev_total = 0
+for index, row in df.iterrows():
+    curr_total = prev_total + row['new_cases'] 
+    sthlm_data.append(curr_total)
+    prev_total = curr_total
+
+df['total_cases'] = sthlm_data
+df['total_cases'] = df['total_cases'].astype(float)
+
+d = 10 #dagar av infektion
+g = 1/d
+si = 0.2 #incubations tid
+p = 10000000 #befolknings mängd
+j = p / 5000
+z = p-j,j,0,0,0
+a = 0.06 #dödlighet
+rh = 1/9 #dagar från infekterade till död
+number_of_days = len(df.index)
+t = np.linspace(0,number_of_days-1,number_of_days)
+
+def model2(z,t,si,g,p,a,rh):
+	s,e,i,r,d = z
+	b = 5 * g
+	dsdt = -b*s*i/p
+	dedt = b*s*i/p - si*e
+	didt = si * e - (1 - a) * g * i - a * rh * i
+	drdt = (1 - a) * g * i
+	dddt = a * rh * i 
+	dzdt = [dsdt,dedt,didt,drdt,dddt]
+	return dzdt
+
+
+number_of_days = len(df.index)
+t = np.linspace(0,number_of_days-1,number_of_days)
+
+s = odeint(model2, z, t, args=(si,g,p,a,rh))
+
+
+
+s_s = s[:, 0]
+df['theoretical_cases1'] = s_s
+e_s = s[:, 1]
+df['theoretical_cases2'] = e_s
+i_s = s[:, 2]
+df['theoretical_cases3'] = i_s
+r_s = s[:, 3]
+df['theoretical_cases4'] = r_s
+d_s = s[:, 4]
+df['theoretical_cases5'] = d_s
+
+ax = plt.gca()
+df.plot(kind='line', x='date', y='theoretical_cases1', ax=ax, color='orange', label = 'S')
+df.plot(kind='line', x='date', y='theoretical_cases2', ax=ax, color='blue', label = 'E')
+df.plot(kind='line', x='date', y='theoretical_cases3', ax=ax, color='green', label = 'I')
+df.plot(kind='line', x='date', y='theoretical_cases4', ax=ax, color='pink', label = 'R')
+df.plot(kind='line', x='date', y='theoretical_cases5', ax=ax, color='purple', label = 'D')
+
+
+plt.xlabel("Dagar")
+plt.ylabel("Antal")
+plt.legend(loc="best")
+plt.show()
