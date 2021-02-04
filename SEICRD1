@@ -10,7 +10,7 @@ df = pd.read_excel(r"C:\Users\ander\OneDrive\Skrivbord\Covid\covidfall0126.xlsx"
 
 
 dagar_infekterad = 10 #dagar av infektion
-g = 1/dagar_infekterad #Andel infected som går till recovered (Gamma)
+g = 1/dagar_infekterad #Andel infected som går till recovered
 de = 0.2 #incubations tid (Delta)
 N = 2300000 #befolknings mängd
 j = N / 5000
