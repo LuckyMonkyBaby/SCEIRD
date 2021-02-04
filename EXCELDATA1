@@ -15,7 +15,7 @@ print(df)
 sthlm_data = []
 prev_total = 0
 for index, row in df.iterrows():
-    curr_total = prev_total + row['Stockholm'] #totala antalet fall idag = totala antalet fall igår + antal nya fall idag
+    curr_total = prev_total + row['Stockholm'] 
     sthlm_data.append(curr_total)
     prev_total = curr_total
 
@@ -24,7 +24,7 @@ df['total_cases'] = sthlm_data
 ax = plt.gca()
 df.plot(kind='line', x='Statistikdatum', y='total_cases', ax=ax, color='pink', figsize=(10,7), label="Smittade totalt Stockholm")
 
-plt.legend(loc='best') #väljer den 'bästa' platsen för linjebeskrivningarna
+plt.legend(loc='best') 
 plt.ylabel("Antal")
 plt.xlabel("Dag")
 plt.ylim(bottom=-1)
