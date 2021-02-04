@@ -1,0 +1,87 @@
+import numpy as np 
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+import pandas as pd
+from numpy import exp
+from pylab import rcParams
+
+
+df = pd.read_excel(r"C:\Users\ander\OneDrive\Skrivbord\Covid\covidfall0126.xlsx", parse_dates=['Statistikdatum'])
+
+
+dagar_infekterad = 10 #dagar av infektion
+g = 1/dagar_infekterad #Andel infected som går till recovered (Gamma)
+de = 0.2 #incubations tid (Delta)
+N = 2300000 #befolknings mängd
+j = N / 5000
+u = N - j
+z = (u,0,j,0,0,0)
+n = 0.1
+dagar = len(df.index) #Dagar under vilken period grafen visar
+a = 1/5 #dagar från infected till critical 1/dagar
+a1 = 1/20 #dagar från critical to dead
+a2 = 1/7 #dagar från critical to recovered
+ic = 0.002 # andelen som går från i till C
+cd = 0.6 # andelen som går från c till d
+t = np.linspace(0,dagar-1,dagar)
+E = 6
+b = n / (n*E) #Förväntad antalet en personer en person smittar per dag
+Restriktioner = False
+StartDag = 70
+DagarAvRestriktion = 90
+StartDag2 = 220
+DagarAvRestriktion2 = 90
+b0 = 0.31
+b_min = 0.07
+
+def model(z,t,de,g,N,b,a,a1,a2,ic,cd,n,Restriktioner,StartDag,DagarAvRestriktion,b0,b_min):
+	s,e,i,c,r,d = z
+	if Restriktioner:
+		if t>StartDag and t<StartDag+DagarAvRestriktion:
+			t1 = t - StartDag 
+			b= b0* exp(- n * t1) + (1 - exp(- n * t1)) * b_min
+		if t>=StartDag+DagarAvRestriktion:
+			t2 = t - StartDag - DagarAvRestriktion
+			b= b_min* exp(- n * t2) + (1 - exp(- n * t2)) * b0 	
+		if t>StartDag2 and t<StartDag2+DagarAvRestriktion2:
+			t1 = t - StartDag2 
+			b= b0* exp(- n * t1) + (1 - exp(- n * t1)) * b_min
+		if t>=StartDag2+DagarAvRestriktion2:
+			t2 = t - StartDag2 - DagarAvRestriktion2
+			b= b_min* exp(- n * t2) + (1 - exp(- n * t2)) * b0 	
+	dsdt = -b*i*s/N
+	dedt = b*i*s/N - de*e
+	didt = de * e - a * ic * i - g * (1 - ic) * i
+	dcdt = a * ic * i - a2 * cd * c - a1 * (1 - cd) * c
+	drdt = g * (1 - ic) * i + a1 * (1 - cd) * c
+	dddt = a2 * cd * c
+	dzdt = [dsdt,dedt,didt,dcdt,drdt,dddt]
+	return dzdt
+
+s1 = odeint(model, z, t, args=(de,g,N,b,a,a1,a2,ic,cd,n,Restriktioner,StartDag,DagarAvRestriktion,b0,b_min))
+
+s_s = s1[:, 0]
+e_s = s1[:, 1]
+i_s = s1[:, 2]
+c_s = s1[:, 3]
+r_s = s1[:, 4]
+d_s = s1[:, 5]
+
+T = s_s + e_s + i_s + c_s + r_s + d_s
+
+
+
+plt.plot(t, T,"g--",Label="T")
+plt.plot(t, s_s,"pink",Label="s(t)")
+plt.plot(t, e_s,"g", Label="e(t)")
+plt.plot(t, i_s,"blue",Label="i(t)")
+#plt.plot(t, c_s,"brown",Label="c(t)")
+plt.plot(t, r_s,"purple",Label="r(t)")
+plt.plot(t, d_s,"orange",Label="d(t)")
+
+plt.ylim(bottom=-0.1)
+plt.xlabel("Dagar")
+plt.ylabel("Antal")
+plt.legend(loc="best")
+plt.savefig("SEICRD")
+plt.show()
