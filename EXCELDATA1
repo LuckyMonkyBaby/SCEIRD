@@ -1,0 +1,31 @@
+
+import numpy 
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+import pandas as pd
+
+df = pd.read_excel(r"C:\Users\ander\OneDrive\Skrivbord\Covid\Covidfall0126.xlsx", parse_dates=['Statistikdatum'])
+print(df)
+
+
+
+#ax = plt.gca()
+#df.plot(kind='line', x='Statistikdatum', y='Totalt_antal_fall', ax=ax, color='pink', label = 'Totalt antal fall')
+
+sthlm_data = []
+prev_total = 0
+for index, row in df.iterrows():
+    curr_total = prev_total + row['Stockholm'] #totala antalet fall idag = totala antalet fall igår + antal nya fall idag
+    sthlm_data.append(curr_total)
+    prev_total = curr_total
+
+
+df['total_cases'] = sthlm_data
+ax = plt.gca()
+df.plot(kind='line', x='Statistikdatum', y='total_cases', ax=ax, color='pink', figsize=(10,7), label="Smittade totalt Stockholm")
+
+plt.legend(loc='best') #väljer den 'bästa' platsen för linjebeskrivningarna
+plt.ylabel("Antal")
+plt.xlabel("Dag")
+plt.ylim(bottom=-1)
+plt.show()
